@@ -1,64 +1,60 @@
 # Open edX Brand Package Interface
 
-This project contains the default branding assets and style used in Open edX
-applications. It is published on npm as `@openedx/brand-openedx`.
+This project contains the default branding assets and style used in Open edX applications. It is published on npm as `@edx/brand-openedx`.
 
-The file structure serves as an interface to be implemented for custom
-branding and theming of Open edX.
+The file structure serves as an interface to be implemented for custom branding and theming of Open edX.
 
-## How to use this package
 
-Applications in Open edX are configured by default to include this
-package for branding assets and theming visual style.
+## Change MFE
 
-To use a custom brand and theme\...
+MicroFrontEnd Base plugin for tutor comes with a list of mfes: 
+(Account, Gradebook, Learning, Profile, Course authoring, discussions and authn), in 
+order to change those parts we need to apply patches in the mfe plugin.
 
-1.  Fork or copy this project. Ensure that it lives in a location
-    accessible to Open edX applications during asset builds. This may be
-    a published git repo, npm, or local folder depending on your
-    situation.
-2.  Replace the assets in this project with your own logos or SASS
-    theme. Match the filenames exactly. Open edX applications refer to
-    these files by their filepath. Refer to the brand for edx.org at
-    <https://github.com/edx/brand> for an example.
-3.  Configure your Open edX instance to consume your custom brand
-    package. Refer to this documentation on configuring the platform:
-    https://docs.openedx.org/projects/openedx-proposals/en/latest/architectural-decisions/oep-0048-brand-customization.html
-    \[TODO: Add a link to documentation on configuring in Open edX MFE
-    pipelines when it exists\]
-4.  Rebuild the assets and microfrontends in your Open edX instance to
-    see the new brand reflected. \[TODO: Add link to relevant
-    documentation when it is completed\].
+-Why is it hard to change mfe styles? :
+https://open-edx-proposals.readthedocs.io/en/latest/architectural-decisions/oep-0048-brand-customization.html
 
-## Files this package must make available
+Here we learn about the brand customization packages which include the necessary
+files to overwrite the styles in the mfe’s.
 
-`/logo.svg`
+## Creating and modifying a tutor plugin
 
-![logo](/logo.svg)
+We’ll need to create a plugin which will be consumed by the mfe plugin itself and it’ll 
+work as a patch: (Let’s call it myplugin.py)
 
-`/logo-trademark.svg` A variant of the logo with a trademark ® or ™.
-Note: This file must be present. If you don\'t have a trademark variant
-of your logo, copy your regular logo and use that.
+1. $ mkdir -p "$(tutor plugins printroot)" – Create the plugins folder
 
-![logo](/logo-trademark.svg)
+2. $ touch "$(tutor plugins printroot)/myplugin.py" – Create the plugin 
+file in the folder.
 
-`/logo-white.svg` A variant of the logo for use on dark backgrounds
+3. tutor plugins list – Verify it was created.
 
-![logo](/logo-white.svg)
+4. tutor plugins enable myplugin – Enable the plugin.
 
-`/favicon.ico` A site favicon
+5. tutor config save – Regenerate the environment.
 
-![favicon](/favicon.ico)
+In order to modify it use (nano myplugin.py) making sure you are in the plugins folder with (cd "$(tutor plugins printroot)").
 
-`/paragon/images/card-imagecap-fallback.png` A variant of the default
-fallback image for [Card.ImageCap] component.
+The content of the plugin that we just created should be something like this:
 
-![card-imagecap-fallback](/paragon/images/card-imagecap-fallback.png)
+```
+    from tutor import hooks
+        hooks.Filters.ENV_PATCHES.add_item(
+            (
+                "mfe-dockerfile-post-npm-install",
+                """
+                RUN npm install '@edx/brand@git+git@github.com:CyberWarrior-Ops/custom-brand-openedx.git' --force
+                """
+            )
+        )
+```
 
-`/paragon/fonts.scss`, `/paragon/_variables.scss`,
-`/paragon/_overrides.scss` A SASS theme for
-[\@edx/paragon](https://github.com/openedx/paragon). Theming
-documentation in Paragon is coming soon. In the meantime, you can start
-a theme by the contents of [\_variables.scss (after line
-7)](https://github.com/openedx/paragon/blob/master/scss/core/_variables.scss#L7-L1046)
-file from the Paragon repository into this file.
+## Make changes on the mfe
+
+1. Update the repository files.
+
+2. In the server run the command tutor config save.
+
+3. Run tutor images build --no-cache mfe.
+
+4. Run tutor local launch.
