@@ -43,7 +43,19 @@ The content of the plugin that we just created should be something like this:
             (
                 "mfe-dockerfile-post-npm-install",
                 """
-                RUN npm install '@edx/brand@git+git@github.com:CyberWarrior-Ops/custom-brand-openedx.git' --force
+                RUN npm install '@edx/brand@git+git@github.com:jatejada/custom-brand-openedx.git' --force
+                """
+            )
+        )
+```
+
+```
+    from tutor import hooks
+        hooks.Filters.ENV_PATCHES.add_item(
+            (
+                "mfe-dockerfile-post-npm-install",
+                """
+                RUN npm install '@edx/brand-openedx@git+https://github.com/jatejada/brand-openedx' --force
                 """
             )
         )
